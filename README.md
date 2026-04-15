@@ -20,6 +20,10 @@ self-host the signaling (`hbbs`) and relay (`hbbr`) servers required by
 RustDesk clients, so your remote desktop traffic stays on infrastructure you
 control.
 
+**No License Required:** Unlike the RustDesk Server PRO version, this add-on
+bundles the free, open-source version of RustDesk Server. You do not need
+any paid license or subscription to run this relay for your personal devices!
+
 The public RustDesk servers are intended for testing and research; they are
 not sized for production traffic. Self-hosting gives you:
 
@@ -27,11 +31,26 @@ not sized for production traffic. Self-hosting gives you:
 - Full control over keys and who can connect to your relay.
 - The option to enforce end-to-end encrypted clients only.
 
-## Installation
+## Installation and Configuration
 
-Add this repository to the Home Assistant add-on store, then install the
-**RustDesk Server** add-on. Detailed documentation, configuration reference,
-and troubleshooting live in [DOCS.md](./rustdesk-server/DOCS.md).
+1. Add this repository to the Home Assistant add-on store.
+2. Install the **RustDesk Server** add-on.
+3. Start the add-on. (It auto-generates your `public_key` and `private_key`
+   on the first boot).
+4. Check the logs for your generated keys and put them into your clients!
+
+Detailed documentation lives in [DOCS.md](./rustdesk-server/DOCS.md).
+
+### Using with an Internal Domain (NGINX)
+
+If you want to use a domain name like `rustdesk.example.com`, note that
+RustDesk uses raw TCP/UDP connections. A standard HTTP reverse proxy (like
+a default Nginx web proxy) **will not work**.
+
+You must configure **TCP/UDP Streams** for ports `21115`-`21117`. If you use
+Nginx Proxy Manager, add these ports under the **Streams** tab, not the
+Hosts tab! See [DOCS.md](./rustdesk-server/DOCS.md) for the exact
+configuration snippet.
 
 ## Support
 

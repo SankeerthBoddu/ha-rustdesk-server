@@ -90,6 +90,50 @@ router to reach the server from the outside:
 > and UDP hole punching. Ports are still declared so the Supervisor shows
 > them in the UI.
 
+## Reverse Proxy / NGINX
+
+RustDesk relies heavily on raw TCP and UDP connections. Standard HTTP/HTTPS reverse proxies (like typical Nginx setups for web interfaces) **will not work** out-of-the-box for RustDesk's core components.
+
+If you are using NGINX or Nginx Proxy Manager to route traffic via an internal domain like `rustdesk.your-domain.tld`, you must configure TCP/UDP streams.
+
+### Nginx Proxy Manager (NPM Add-on)
+If you use the Nginx Proxy Manager Add-on in Home Assistant:
+1. Go to **Streams** (not Hosts).
+2. Add four separate streams targeting your Home Assistant IP address:
+   - Port `21115` TCP -> `<HA_IP>:21115`
+   - Port `21116` TCP -> `<HA_IP>:21116`
+   - Port `21116` UDP -> `<HA_IP>:21116`
+   - Port `21117` TCP -> `<HA_IP>:21117`
+3. Ensure these ports are open and forwarded on your edge router to the NPM host.
+
+### NGINX Config (Manual)
+Add the following to your `nginx.conf` within the `stream { ... }` block (outside the `http { ... }` block):
+
+```nginx
+stream {
+    # hbbs - NAT type test and online status
+    server {
+        listen 21115;
+        proxy_pass <YOUR_HA_IP>:21115;
+    }
+    # hbbs - Hole punching
+    server {
+        listen 21116;
+        proxy_pass <YOUR_HA_IP>:21116;
+    }
+    # hbbs - UDP heartbeat
+    server {
+        listen 21116 udp;
+        proxy_pass <YOUR_HA_IP>:21116;
+    }
+    # hbbr - Relay service
+    server {
+        listen 21117;
+        proxy_pass <YOUR_HA_IP>:21117;
+    }
+}
+```
+
 ## Persistent data
 
 The add-on persists its keys and the `hbbs` SQLite database under
