@@ -75,15 +75,15 @@ together with `private_key` if you supply one.
 The add-on exposes the full set of ports RustDesk uses. Forward these on your
 router to reach the server from the outside:
 
-| Port        | Component | Purpose                                                       |
-| ----------- | --------- | ------------------------------------------------------------- |
-| 21114/tcp   | hbbs      | Web console / API (Pro feature, not needed for OSS clients)   |
-| 21115/tcp   | hbbs      | NAT type test and online status query (**required**)          |
-| 21116/tcp   | hbbs      | TCP hole punching and connection service (**required**)       |
-| 21116/udp   | hbbs      | ID registration and heartbeat (**required**)                  |
-| 21117/tcp   | hbbr      | Relay service (**required**)                                  |
-| 21118/tcp   | hbbs      | RustDesk Web Client support (optional)                        |
-| 21119/tcp   | hbbr      | RustDesk Web Client support (optional)                        |
+| Port | Component | Purpose |
+| --- | --- | --- |
+| 21114/tcp | hbbs | Web console / API (Pro only) |
+| 21115/tcp | hbbs | NAT type test and online status (**required**) |
+| 21116/tcp | hbbs | TCP hole punching (**required**) |
+| 21116/udp | hbbs | ID registration and heartbeat (**required**) |
+| 21117/tcp | hbbr | Relay service (**required**) |
+| 21118/tcp | hbbs | RustDesk Web Client support (optional) |
+| 21119/tcp | hbbr | RustDesk Web Client support (optional) |
 
 > [!TIP]
 > The add-on runs on the host network to allow accurate NAT type detection
@@ -92,22 +92,31 @@ router to reach the server from the outside:
 
 ## Reverse Proxy / NGINX
 
-RustDesk relies heavily on raw TCP and UDP connections. Standard HTTP/HTTPS reverse proxies (like typical Nginx setups for web interfaces) **will not work** out-of-the-box for RustDesk's core components.
+RustDesk relies heavily on raw TCP and UDP connections. Standard HTTP/HTTPS
+reverse proxies (like typical Nginx setups for web interfaces) **will not
+work** out-of-the-box for RustDesk's core components.
 
-If you are using NGINX or Nginx Proxy Manager to route traffic via an internal domain like `rustdesk.your-domain.tld`, you must configure TCP/UDP streams.
+If you are using NGINX or Nginx Proxy Manager to route traffic via an
+internal domain like `rustdesk.your-domain.tld`, you must configure
+TCP/UDP streams.
 
 ### Nginx Proxy Manager (NPM Add-on)
+
 If you use the Nginx Proxy Manager Add-on in Home Assistant:
+
 1. Go to **Streams** (not Hosts).
 2. Add four separate streams targeting your Home Assistant IP address:
    - Port `21115` TCP -> `<HA_IP>:21115`
    - Port `21116` TCP -> `<HA_IP>:21116`
    - Port `21116` UDP -> `<HA_IP>:21116`
    - Port `21117` TCP -> `<HA_IP>:21117`
-3. Ensure these ports are open and forwarded on your edge router to the NPM host.
+3. Ensure these ports are open and forwarded on your edge router to the NPM
+   host.
 
 ### NGINX Config (Manual)
-Add the following to your `nginx.conf` within the `stream { ... }` block (outside the `http { ... }` block):
+
+Add the following to your `nginx.conf` within the `stream { ... }` block
+(outside the `http { ... }` block):
 
 ```nginx
 stream {

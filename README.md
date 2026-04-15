@@ -33,11 +33,17 @@ not sized for production traffic. Self-hosting gives you:
 
 ## Installation and Configuration
 
-1. Add this repository to the Home Assistant add-on store.
-2. Install the **RustDesk Server** add-on.
-3. Start the add-on. (It auto-generates your `public_key` and `private_key`
+1. Click the button above to add this repository to your Home Assistant instance.
+   *(Note: This only adds the repository to your Add-on Store, it doesn't
+   install the addon directly).*
+2. Navigate to Settings > Add-ons > Add-on Store.
+3. Scroll all the way down to **RustDesk Server Home Assistant Add-on** and
+   select it.
+4. Click **Install**. *(Since we are testing locally without GHCR, this will
+   take 5-15 minutes to build on your device).*
+5. Start the add-on. (It auto-generates your `public_key` and `private_key`
    on the first boot).
-4. Check the logs for your generated keys and put them into your clients!
+6. Check the Add-on Logs for your generated keys and put them into your clients!
 
 Detailed documentation lives in [DOCS.md](./rustdesk-server/DOCS.md).
 

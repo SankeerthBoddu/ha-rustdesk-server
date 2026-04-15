@@ -41,4 +41,5 @@ schema:
   relay: str?
   private_key: password?
   public_key: str?
-image: ghcr.io/sankeerthboddu/{arch}-ha-rustdesk-server
+# Comment out the image key to force Supervisor to build locally for testing
+# image: ghcr.io/sankeerthboddu/{arch}-ha-rustdesk-server
