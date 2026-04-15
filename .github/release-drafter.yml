@@ -1,0 +1,44 @@
+---
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+categories:
+  - title: "Breaking changes"
+    labels:
+      - "breaking"
+  - title: "New features"
+    labels:
+      - "feature"
+      - "enhancement"
+  - title: "Bug fixes"
+    labels:
+      - "fix"
+      - "bug"
+  - title: "Maintenance"
+    labels:
+      - "chore"
+      - "dependencies"
+      - "refactor"
+  - title: "Documentation"
+    labels:
+      - "documentation"
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+version-resolver:
+  major:
+    labels:
+      - "breaking"
+  minor:
+    labels:
+      - "feature"
+      - "enhancement"
+  patch:
+    labels:
+      - "fix"
+      - "bug"
+      - "chore"
+      - "dependencies"
+      - "documentation"
+  default: patch
+template: |
+  ## Changes
+
+  $CHANGES

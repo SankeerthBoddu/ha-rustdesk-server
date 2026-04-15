@@ -1,0 +1,78 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Home Assistant Add-on: RustDesk Server
+# Verifies and materializes the Ed25519 keypair on disk.
+#
+# Behaviour:
+#   - If a key is present in add-on options AND on disk, they must match.
+#   - If only one of private/public is provided, the run is aborted.
+#   - If neither is present, hbbs will generate a keypair on first boot.
+# ==============================================================================
+
+declare private_key
+declare public_key
+declare present_private_key
+declare present_public_key
+
+bashio::log.info "Verifying keypair configuration"
+
+if [ ! -d /config ]; then
+    mkdir -p /config
+fi
+
+# Materialize keys supplied via add-on options into /config.
+if [ ! -f /config/id_ed25519 ] && bashio::config.has_value 'private_key'; then
+    bashio::log.info "Writing configured private key to /config/id_ed25519"
+    private_key=$(bashio::config 'private_key')
+    printf '%s' "${private_key}" > /config/id_ed25519
+fi
+
+if [ ! -f /config/id_ed25519.pub ] && bashio::config.has_value 'public_key'; then
+    bashio::log.info "Writing configured public key to /config/id_ed25519.pub"
+    public_key=$(bashio::config 'public_key')
+    printf '%s' "${public_key}" > /config/id_ed25519.pub
+fi
+
+# If a key is provided AND already exists on disk, fail fast on mismatch.
+if [ -f /config/id_ed25519 ] && bashio::config.has_value 'private_key'; then
+    present_private_key="$(cat '/config/id_ed25519')"
+    if ! bashio::config.equals 'private_key' "${present_private_key}"; then
+        bashio::log.fatal "Configured private key does not match /config/id_ed25519."
+        bashio::log.fatal "Remove one of them to continue."
+        bashio::exit.nok
+    fi
+fi
+
+if [ -f /config/id_ed25519.pub ] && bashio::config.has_value 'public_key'; then
+    present_public_key="$(cat '/config/id_ed25519.pub')"
+    if ! bashio::config.equals 'public_key' "${present_public_key}"; then
+        bashio::log.fatal "Configured public key does not match /config/id_ed25519.pub."
+        bashio::log.fatal "Remove one of them to continue."
+        bashio::exit.nok
+    fi
+fi
+
+# Require both halves if either is present.
+if [ -f /config/id_ed25519.pub ] && [ ! -f /config/id_ed25519 ]; then
+    bashio::log.fatal "Private key is missing. Provide BOTH private and public keys."
+    bashio::exit.nok
+fi
+
+if [ ! -f /config/id_ed25519.pub ] && [ -f /config/id_ed25519 ]; then
+    bashio::log.fatal "Public key is missing. Provide BOTH private and public keys."
+    bashio::exit.nok
+fi
+
+# When both keys are present, lock down permissions and validate.
+if [ -f /config/id_ed25519.pub ] && [ -f /config/id_ed25519 ]; then
+    chmod 0600 /config/id_ed25519 /config/id_ed25519.pub
+    chown root:root /config/id_ed25519 /config/id_ed25519.pub
+    if ! /opt/rustdesk-server/rustdesk-utils validatekeypair \
+        "$(cat /config/id_ed25519.pub)" "$(cat /config/id_ed25519)"; then
+        bashio::log.fatal "Keypair validation failed."
+        bashio::exit.nok
+    fi
+fi
+
+bashio::log.info "Keypair configuration is valid"

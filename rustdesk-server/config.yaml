@@ -1,0 +1,44 @@
+---
+name: RustDesk Server
+version: "1.1.11-1"
+slug: rustdesk-server
+description: Self-hosted RustDesk server (hbbs + hbbr) for your own remote desktop relay.
+url: https://github.com/sankeerthboddu/ha-rustdesk-server
+arch:
+  - amd64
+  - aarch64
+  - armv7
+init: false
+startup: services
+boot: auto
+host_network: true
+map:
+  - type: addon_config
+    read_only: false
+ports:
+  "21114/tcp": 21114
+  "21115/tcp": 21115
+  "21116/tcp": 21116
+  "21116/udp": 21116
+  "21117/tcp": 21117
+  "21118/tcp": 21118
+  "21119/tcp": 21119
+ports_description:
+  "21114/tcp": hbbs - Web console / API (only needed for Pro features without an SSL proxy)
+  "21115/tcp": hbbs - NAT type test and online status query
+  "21116/tcp": hbbs - TCP hole punching and connection service
+  "21116/udp": hbbs - ID registration and heartbeat service
+  "21117/tcp": hbbr - Relay service (required)
+  "21118/tcp": hbbs - Web client support (optional)
+  "21119/tcp": hbbr - Web client support (optional)
+options:
+  encrypted_only: true
+  relay: ""
+  private_key: ""
+  public_key: ""
+schema:
+  encrypted_only: bool
+  relay: str?
+  private_key: password?
+  public_key: str?
+image: ghcr.io/sankeerthboddu/{arch}-ha-rustdesk-server

@@ -1,0 +1,31 @@
+---
+configuration:
+  encrypted_only:
+    name: Encrypted clients only
+    description: >-
+      Force all clients to use the server's key and reject unencrypted
+      clients (passes -k _ to hbbs and hbbr). Strongly recommended.
+  relay:
+    name: Relay server(s)
+    description: >-
+      Hostname or IP address of the machine(s) running hbbr (usually this
+      container), separated by commas. Append :port if you are not using the
+      default 21117.
+  private_key:
+    name: Private key
+    description: >-
+      Base64-encoded Ed25519 private key. Leave empty to let hbbs generate
+      one on first boot.
+  public_key:
+    name: Public key
+    description: >-
+      Base64-encoded Ed25519 public key matching the private key. Must be
+      provided together with private_key.
+network:
+  "21114/tcp": hbbs - Web console / API (Pro feature, only needed without an SSL proxy)
+  "21115/tcp": hbbs - NAT type test and online status query (required)
+  "21116/tcp": hbbs - TCP hole punching and connection service (required)
+  "21116/udp": hbbs - ID registration and heartbeat service (required)
+  "21117/tcp": hbbr - Relay service (required)
+  "21118/tcp": hbbs - RustDesk Web Client support (optional)
+  "21119/tcp": hbbr - RustDesk Web Client support (optional)

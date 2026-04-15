@@ -1,0 +1,21 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Home Assistant Add-on: RustDesk Server
+# Runs the hbbr (relay) service
+# ==============================================================================
+
+declare -a params
+
+cd /config || bashio::exit.nok "Could not change working directory to /config"
+
+params=()
+
+# Encrypted-only mode forces clients to use the server's key.
+if bashio::config.true 'encrypted_only'; then
+    bashio::log.info "Encrypted-only mode is enabled (-k _)"
+    params+=(-k "_")
+fi
+
+bashio::log.info "Starting hbbr: $(/opt/rustdesk-server/hbbr --version)"
+exec /opt/rustdesk-server/hbbr "${params[@]}"

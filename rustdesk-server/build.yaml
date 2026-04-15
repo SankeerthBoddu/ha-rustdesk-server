@@ -1,0 +1,10 @@
+---
+build_from:
+  amd64: ghcr.io/hassio-addons/base/amd64:18.2.1
+  aarch64: ghcr.io/hassio-addons/base/aarch64:18.2.1
+  armv7: ghcr.io/hassio-addons/base/armv7:18.2.1
+labels:
+  org.opencontainers.image.title: RustDesk Server
+  org.opencontainers.image.description: Home Assistant add-on for RustDesk Server
+  org.opencontainers.image.source: https://github.com/sankeerthboddu/ha-rustdesk-server
+  org.opencontainers.image.licenses: MIT
