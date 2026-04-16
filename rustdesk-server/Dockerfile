@@ -19,7 +19,6 @@ RUN \
     && mkdir -p /opt \
     && if [ "${BUILD_ARCH}" = "aarch64" ]; then ARCH="arm64v8"; \
        elif [ "${BUILD_ARCH}" = "amd64" ]; then ARCH="amd64"; \
-       elif [ "${BUILD_ARCH}" = "armv7" ]; then ARCH="armv7"; \
        else echo "Unsupported architecture: ${BUILD_ARCH}" && exit 1; \
        fi \
     && curl -fSL -o /tmp/rustdesk-server.zip \

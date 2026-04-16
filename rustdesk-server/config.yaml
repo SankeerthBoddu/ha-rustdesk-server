@@ -7,10 +7,8 @@ url: https://github.com/sankeerthboddu/ha-rustdesk-server
 arch:
   - amd64
   - aarch64
-  - armv7
 init: false
 startup: services
-boot: auto
 host_network: true
 map:
   - type: addon_config
