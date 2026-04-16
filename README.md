@@ -10,7 +10,7 @@
 Self-hosted [RustDesk][rustdesk] server (hbbs + hbbr) for your own
 remote desktop relay, running as a Home Assistant add-on.
 
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.][add-repo-shield]][add-repo]
+[![Open Home Assistant and add repository.][add-repo-shield]][add-repo]
 
 ## About
 

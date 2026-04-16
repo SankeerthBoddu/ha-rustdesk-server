@@ -22,7 +22,7 @@ This add-on bundles the two RustDesk server components:
 
 1. Add this repository to your Home Assistant add-on store:
 
-   [![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.][add-repo-shield]][add-repo]
+   [![Open Home Assistant and add repository.][add-repo-shield]][add-repo]
 
 2. Search for **RustDesk Server** in the add-on store and click **Install**.
 3. Configure the add-on (see below) and start it.
@@ -39,12 +39,14 @@ private_key: ""
 public_key: ""
 ```
 
-> [!NOTE]
-> Leaving `private_key` / `public_key` empty lets `hbbs` generate a fresh
-> keypair on first boot. The generated keys are stored in the add-on
-> configuration folder (`/addon_configs/<slug>/`) as `id_ed25519` and
-> `id_ed25519.pub`. Copy the contents of `id_ed25519.pub` into your RustDesk
-> clients as the **Key**.
+> [!TIP]
+> **Connecting Clients**
+> To successfully establish a RustDesk remote session, BOTH your local
+> machine and your target remote machine MUST be configured identically. Open
+> the **Network Settings** in both RustDesk apps and specify your **ID Server**
+> (your domain or IP) and paste your **Key** (the public key shown in logs).
+> When correctly configured, the bottom of the client will turn green and say
+> "Ready".
 
 ### Option: `encrypted_only`
 
@@ -60,15 +62,15 @@ connections. Include a port only if you use something other than the default
 `21117`, for example `rustdesk.example.com:21117`. Separate multiple relays
 with commas.
 
-### Option: `private_key` (optional)
+### Option: `private_key` & `public_key` (Leave Blank)
 
-The Ed25519 private key (base64) for the server. Leave empty to auto-generate
-on first boot.
+There is **no need** to manually fill out the `private_key` and `public_key`
+fields in the add-on config. Simply leave them empty!
 
-### Option: `public_key` (optional)
-
-The Ed25519 public key (base64) matching `private_key`. Must be provided
-together with `private_key` if you supply one.
+When the add-on boots for the first time, it automatically generates a fresh,
+secure keypair for you. You can easily find the `Key` printed directly in the
+Add-on's **Log** tab inside Home Assistant. Copy that key and paste it into
+your RustDesk clients.
 
 ## Ports
 
@@ -90,30 +92,57 @@ router to reach the server from the outside:
 > and UDP hole punching. Ports are still declared so the Supervisor shows
 > them in the UI.
 
-## Reverse Proxy / NGINX
+## External Access & Domains
 
-RustDesk relies heavily on raw TCP and UDP connections. Standard HTTP/HTTPS
-reverse proxies (like typical Nginx setups for web interfaces) **will not
-work** out-of-the-box for RustDesk's core components.
+Because RustDesk uses custom TCP and UDP sockets for hole-punching, your
+networking setup must be configured carefully. Standard website reverse-proxies
+will not work out-of-the-box.
 
-If you are using NGINX or Nginx Proxy Manager to route traffic via an
-internal domain like `rustdesk.your-domain.tld`, you must configure
-TCP/UDP streams.
+### Option 1: Direct Router Forward (DuckDNS / No Proxy)
 
-### Nginx Proxy Manager (NPM Add-on)
+If you use **DuckDNS** or just want a simple setup, you do not need NGINX at
+all! Your domain (e.g., `myhome.duckdns.org`) resolves directly to your home
+IP without HTTP proxying.
 
-If you use the Nginx Proxy Manager Add-on in Home Assistant:
+1. Log into your home router's settings.
+2. Port Forward the following ports to your Home Assistant IP address:
+   - `21115` (TCP)
+   - `21116` (TCP and UDP)
+   - `21117` (TCP)
+3. In your RustDesk Client, enter `myhome.duckdns.org` as your **ID Server**.
 
-1. Go to **Streams** (not Hosts).
-2. Add four separate streams targeting your Home Assistant IP address:
+### Option 2: Cloudflare (Custom Domain)
+
+If you own a custom domain (e.g., `rustdesk.your-domain.com`) managed by
+Cloudflare, you must configure your DNS `A` record as **DNS Only (Grey Cloud)**.
+
+> [!WARNING]
+> If you leave the Cloudflare Proxy enabled (Orange Cloud), Cloudflare will
+> instantly block all of RustDesk's traffic because it is not standard website
+> HTTP/HTTPS traffic.
+
+1. Create an `A` record in Cloudflare pointing to your home IP address.
+2. Click the Orange Cloud to turn it Grey (**DNS Only**).
+3. Port Forward `21115-21117` on your router to your Home Assistant IP.
+
+### Option 3: Advanced NGINX Streams
+
+If you absolutely must run the traffic through an internal NGINX server (e.g.,
+Nginx Proxy Manager), you cannot use standard HTTP "Proxy Hosts". You must
+configure raw TCP/UDP Streams.
+
+#### Nginx Proxy Manager (NPM Add-on)
+
+1. Delete any "Proxy Hosts" you created for RustDesk.
+2. Go to the **Streams** tab.
+3. Add four separate streams targeting your Home Assistant IP address:
    - Port `21115` TCP -> `<HA_IP>:21115`
    - Port `21116` TCP -> `<HA_IP>:21116`
    - Port `21116` UDP -> `<HA_IP>:21116`
    - Port `21117` TCP -> `<HA_IP>:21117`
-3. Ensure these ports are open and forwarded on your edge router to the NPM
-   host.
+4. Port Forward these ports on your router, pointing them to your NPM host.
 
-### NGINX Config (Manual)
+#### NGINX Config (Manual)
 
 Add the following to your `nginx.conf` within the `stream { ... }` block
 (outside the `http { ... }` block):
@@ -142,6 +171,27 @@ stream {
     }
 }
 ```
+
+## Common Pitfalls & Troubleshooting
+
+### 1. Error: "ID Does Not Exist"
+
+If you set up your client and get an **"ID Does Not Exist"** error when trying
+to remote into a machine, it means your local computer connects to your
+Private Server correctly, but the *Target Computer* does not! Every computer
+you wish to control must have their **ID Server** and **Key** configured to
+point to your Private Server.
+
+### 2. Cloudflare 504 Gateway Timeout (Checking Logs)
+
+If you are viewing your Home Assistant Add-on logs remotely via a Cloudflare
+proxy, your log viewer tab might suddenly crash with an HTML
+**504 Gateway Timeout** error.
+
+- **Why:** Cloudflare kills any HTTP connection that remains idle for 100
+  seconds. Because the RustDesk server is quiet and rarely prints logs,
+  Cloudflare assumes the log stream froze and cuts you off.
+- **Fix:** Just refresh the web page! Your server did not crash.
 
 ## Persistent data
 
