@@ -45,7 +45,6 @@ jobs:
           args: |
             --${{ matrix.arch }} \
             --target /data/rustdesk-server \
-            --image "${{ github.repository_owner }}/{arch}-ha-rustdesk-server" \
             --docker-hub-check \
             --addon
 
