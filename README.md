@@ -5,7 +5,6 @@
 
 ![Supports amd64 Architecture][amd64-shield]
 ![Supports aarch64 Architecture][aarch64-shield]
-![Supports armv7 Architecture][armv7-shield]
 
 Self-hosted [RustDesk][rustdesk] server (hbbs + hbbr) for your own
 remote desktop relay, running as a Home Assistant add-on.
@@ -39,8 +38,7 @@ not sized for production traffic. Self-hosting gives you:
 2. Navigate to Settings > Add-ons > Add-on Store.
 3. Scroll all the way down to **RustDesk Server Home Assistant Add-on** and
    select it.
-4. Click **Install**. *(Since we are testing locally without GHCR, this will
-   take 5-15 minutes to build on your device).*
+4. Click **Install**.
 5. Start the add-on. (It auto-generates your `public_key` and `private_key`
    on the first boot).
 6. Check the Add-on Logs for your generated keys and put them into your clients!
@@ -76,7 +74,7 @@ MIT License - see [LICENSE](LICENSE) for details. Bundles the upstream
 [add-repo-shield]: https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
-[armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
+
 [discord-ha]: https://discord.gg/c5DvZ4e
 [forum]: https://community.home-assistant.io
 [issues]: https://github.com/sankeerthboddu/ha-rustdesk-server/issues
