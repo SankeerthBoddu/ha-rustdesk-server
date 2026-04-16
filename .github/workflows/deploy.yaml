@@ -45,6 +45,15 @@ jobs:
           args: |
             --${{ matrix.arch }} \
             --target /data/rustdesk-server \
-            --image "ghcr.io/${{ github.repository_owner }}/{arch}-ha-rustdesk-server" \
+            --image "${{ github.repository_owner }}/{arch}-ha-rustdesk-server" \
             --docker-hub-check \
             --addon
+
+      - name: Make package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            --method PATCH \
+            /user/packages/container/${{ matrix.arch }}-ha-rustdesk-server \
+            -f visibility=public || true
