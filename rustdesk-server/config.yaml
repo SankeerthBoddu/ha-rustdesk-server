@@ -24,7 +24,6 @@ ports:
   "21118/tcp": 21118
   "21119/tcp": 21119
 ports_description:
-
   "21114/tcp": hbbs - Web console / API (only needed for Pro features without an SSL proxy)
   "21115/tcp": hbbs - NAT type test and online status query
   "21116/tcp": hbbs - TCP hole punching and connection service
