@@ -4,7 +4,8 @@ name: Stale
 # yamllint disable-line rule:truthy
 on:
   schedule:
-    - cron: "0 8 * * *"
+    # Weekly sweep keeps triage healthy without daily automation churn.
+    - cron: "0 8 * * 0"
   workflow_dispatch:
 
 permissions:

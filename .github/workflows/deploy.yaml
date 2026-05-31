@@ -3,12 +3,11 @@ name: Deploy
 
 # yamllint disable-line rule:truthy
 on:
+  # Publish images only from explicit releases to avoid duplicate runs
+  # caused by both tag push and release events firing for the same version.
   release:
     types:
       - published
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
 
 concurrency:
