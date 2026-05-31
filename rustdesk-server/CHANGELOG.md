@@ -2,6 +2,26 @@
 
 All notable changes to this add-on are documented here.
 
+## 1.1.15-1
+
+### Changed
+
+- Updated bundled RustDesk Server from `1.1.11-1` to `1.1.15`.
+- Updated Home Assistant add-on base images to `v20.1.1` for `amd64` and
+  `aarch64`.
+- Reduced scheduled automation noise by switching maintenance workflows to
+  weekly runs.
+
+### Fixed
+
+- Updated lock maintenance workflow to `dessant/lock-threads@v6`, resolving
+  recent `Lock` workflow failures and Node.js runtime deprecation warnings.
+
+### Maintenance
+
+- Updated CI and release workflow actions to current major versions for
+  improved GitHub Actions compatibility.
+
 ## 1.1.11-1
 
 ### Breaking
