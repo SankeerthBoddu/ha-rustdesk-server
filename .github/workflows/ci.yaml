@@ -14,13 +14,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-addon:
-    name: Lint add-on
+  lint-app:
+    name: Lint Home Assistant App
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
-      - name: Run Home Assistant add-on linter
+        uses: actions/checkout@v7.0.1
+      - name: Run Home Assistant App linter
         uses: frenck/action-addon-linter@v2
         with:
           path: "./rustdesk-server"
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
       - name: Run hadolint
         uses: hadolint/hadolint-action@v3.4.0
         with:
@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
       - name: Run yamllint
         uses: frenck/action-yamllint@v1.5
 
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
       - name: Run shellcheck
         uses: ludeeus/action-shellcheck@2.0.0
         env:
@@ -61,33 +61,122 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
       - name: Run markdownlint
         uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           globs: "**/*.md"
 
-  build:
-    name: Build ${{ matrix.arch }}
+  validate-release:
+    name: Validate release metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Validate versions, checksums, and changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          app_version="$(awk -F'"' '/^version:/ {print $2; exit}' rustdesk-server/config.yaml)"
+          rustdesk_version="$(sed -n 's/^ARG RUSTDESK_SERVER_VERSION=//p' rustdesk-server/Dockerfile | head -n 1)"
+
+          if [[ "${app_version}" != "${rustdesk_version}-"* ]]; then
+            echo "::error::App version ${app_version} does not match RustDesk ${rustdesk_version}"
+            exit 1
+          fi
+
+          if ! grep -Fqx "## ${app_version}" rustdesk-server/CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no section for ${app_version}"
+            exit 1
+          fi
+
+          for variable in RUSTDESK_SERVER_SHA256_AMD64 RUSTDESK_SERVER_SHA256_AARCH64; do
+            checksum="$(sed -n "s/^ARG ${variable}=//p" rustdesk-server/Dockerfile | head -n 1)"
+            if [[ ! "${checksum}" =~ ^[0-9a-f]{64}$ ]]; then
+              echo "::error::${variable} must contain a pinned SHA-256 digest"
+              exit 1
+            fi
+          done
+
+          if [[ -e rustdesk-server/build.yaml ]]; then
+            echo "::error::Legacy rustdesk-server/build.yaml must not be restored"
+            exit 1
+          fi
+
+  prepare-build:
+    name: Prepare multi-arch build
     needs:
-      - lint-addon
+      - lint-app
       - lint-hadolint
       - lint-yaml
       - lint-shellcheck
+      - lint-markdown
+      - validate-release
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch:
-          - amd64
-          - aarch64
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      version: ${{ steps.info.outputs.version }}
+      name: ${{ steps.info.outputs.name }}
+      description: ${{ steps.info.outputs.description }}
+      url: ${{ steps.info.outputs.url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
-      - name: Build add-on
-        uses: home-assistant/builder@2024.08.2
+        uses: actions/checkout@v7.0.1
+
+      - name: Get App information
+        id: info
+        uses: home-assistant/actions/helpers/info@master
         with:
-          args: |
-            --test \
-            --${{ matrix.arch }} \
-            --target /data/rustdesk-server
+          path: "./rustdesk-server"
+
+      - name: Prepare build matrix
+        id: matrix
+        uses: home-assistant/builder/actions/prepare-multi-arch-matrix@2026.06.0
+        with:
+          architectures: ${{ steps.info.outputs.architectures }}
+          image-name: ha-rustdesk-server
+          registry-prefix: ghcr.io/sankeerthboddu
+
+  build:
+    name: Build & scan ${{ matrix.arch }}
+    needs: prepare-build
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare-build.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build image with BuildKit
+        uses: home-assistant/builder/actions/build-image@2026.06.0
+        with:
+          arch: ${{ matrix.arch }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+          context: ./rustdesk-server
+          image: ${{ matrix.image }}
+          image-tags: ci
+          labels: |
+            io.hass.type=app
+            io.hass.name=${{ needs.prepare-build.outputs.name }}
+            io.hass.description=${{ needs.prepare-build.outputs.description }}
+            io.hass.url=${{ needs.prepare-build.outputs.url }}
+          load: true
+          push: false
+          cosign: false
+          version: ${{ needs.prepare-build.outputs.version }}
+
+      - name: Scan image for fixable high/critical vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ matrix.image }}:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          timeout: 10m
