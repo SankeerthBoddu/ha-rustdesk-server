@@ -3,8 +3,6 @@ name: Deploy
 
 # yamllint disable-line rule:truthy
 on:
-  # Publish images only from explicit releases to avoid duplicate runs
-  # caused by both tag push and release events firing for the same version.
   release:
     types:
       - published
@@ -15,43 +13,115 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build & publish ${{ matrix.arch }}
+  prepare:
+    name: Prepare release build
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      architectures: ${{ steps.info.outputs.architectures }}
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      version: ${{ steps.info.outputs.version }}
+      name: ${{ steps.info.outputs.name }}
+      description: ${{ steps.info.outputs.description }}
+      url: ${{ steps.info.outputs.url }}
+    steps:
+      - name: Checkout release
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          persist-credentials: false
+
+      - name: Get App information
+        id: info
+        uses: home-assistant/actions/helpers/info@master
+        with:
+          path: "./rustdesk-server"
+
+      - name: Verify release tag matches App version
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          APP_VERSION: ${{ steps.info.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ "${RELEASE_TAG}" != "v${APP_VERSION}" ]]; then
+            echo "::error::Release tag ${RELEASE_TAG} must be v${APP_VERSION}"
+            exit 1
+          fi
+
+      - name: Prepare build matrix
+        id: matrix
+        uses: home-assistant/builder/actions/prepare-multi-arch-matrix@2026.06.0
+        with:
+          architectures: ${{ steps.info.outputs.architectures }}
+          image-name: ha-rustdesk-server
+          registry-prefix: ghcr.io/sankeerthboddu
+
+  build:
+    name: Build & publish ${{ matrix.arch }}
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
       packages: write
     strategy:
       fail-fast: false
-      matrix:
-        arch:
-          - amd64
-          - aarch64
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+      - name: Checkout release
+        uses: actions/checkout@v7.0.1
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          persist-credentials: false
 
-      - name: Build and push
-        uses: home-assistant/builder@2024.08.2
+      - name: Build, push, and sign image
+        uses: home-assistant/builder/actions/build-image@2026.06.0
         with:
-          args: |
-            --${{ matrix.arch }} \
-            --target /data/rustdesk-server \
-            --docker-hub-check \
-            --addon
+          arch: ${{ matrix.arch }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+          context: ./rustdesk-server
+          image: ${{ matrix.image }}
+          image-tags: |
+            ${{ needs.prepare.outputs.version }}
+            latest
+          labels: |
+            io.hass.type=app
+            io.hass.name=${{ needs.prepare.outputs.name }}
+            io.hass.description=${{ needs.prepare.outputs.description }}
+            io.hass.url=${{ needs.prepare.outputs.url }}
+          push: true
+          version: ${{ needs.prepare.outputs.version }}
 
-      - name: Make package public
+  manifest:
+    name: Publish multi-arch manifest
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Publish multi-arch manifest
+        uses: home-assistant/builder/actions/publish-multi-arch-manifest@2026.06.0
+        with:
+          architectures: ${{ needs.prepare.outputs.architectures }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-name: ha-rustdesk-server
+          image-tags: |
+            ${{ needs.prepare.outputs.version }}
+            latest
+          registry-prefix: ghcr.io/sankeerthboddu
+
+      - name: Make multi-arch package public
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api \
             --method PATCH \
-            /user/packages/container/${{ matrix.arch }}-ha-rustdesk-server \
+            /user/packages/container/ha-rustdesk-server \
             -f visibility=public || true
