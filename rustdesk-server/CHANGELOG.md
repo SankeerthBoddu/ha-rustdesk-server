@@ -4,13 +4,13 @@ All notable changes to this Home Assistant App are documented here.
 
 ## 1.1.16-1
 
-### Runtime Changes
+### 1.1.16-1 Runtime Changes
 
 - Updated bundled RustDesk Server from `1.1.15` to `1.1.16`.
 - Fixed the upstream long-offline peer status overflow issue.
 - Included upstream dependency and UDP punch-hole security fixes.
 
-### Maintenance Updates
+### 1.1.16-1 Maintenance Updates
 
 - Updated `markdownlint-cli2-action` to v24.
 - Updated `actions/stale` to v11.
