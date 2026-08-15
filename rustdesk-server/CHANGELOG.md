@@ -2,6 +2,42 @@
 
 All notable changes to this Home Assistant App are documented here.
 
+## 1.1.16-2
+
+### 1.1.16-2 Build and Security
+
+- Migrated from the retired legacy Home Assistant builder to the current
+  BuildKit-based App build actions.
+- Updated the Home Assistant base image to `21.0.1`.
+- Added native `amd64` and `aarch64` CI builds and a signed multi-architecture
+  release image.
+- Added SHA-256 verification for downloaded RustDesk Server release archives.
+- Added CI vulnerability scanning that blocks fixable high/critical OS-package
+  findings and reports inherited high/critical library findings.
+- Switched the App image to the generic multi-architecture
+  `ghcr.io/sankeerthboddu/ha-rustdesk-server` package.
+
+### 1.1.16-2 Release and Maintenance
+
+- Made `config.yaml` the authoritative Home Assistant App release version so
+  release tags match packaging revisions such as `1.1.16-2` exactly.
+- Updated Renovate for the BuildKit/base-image layout and added a reminder to
+  review upstream RustDesk asset digests with RustDesk version bumps.
+- Relaxed stale issue handling and removed automatic locking of closed support
+  threads.
+- Added a security reporting policy and more actionable bug-report diagnostics.
+
+### 1.1.16-2 Documentation
+
+- Updated project terminology to Home Assistant App (formerly add-on).
+- Added direct support links to the Home Assistant RustDesk community thread.
+- Expanded Tailscale guidance, including LAN subnet routing versus direct
+  `100.x` addressing and `Ready` status versus a complete session path.
+- Clarified relay configuration, required ports, NGINX Streams, Cloudflare,
+  persistence, backups, and common connection failures.
+- Added a visible maintenance statement explaining how upstream updates are
+  monitored and tested.
+
 ## 1.1.16-1
 
 ### 1.1.16-1 Runtime Changes
