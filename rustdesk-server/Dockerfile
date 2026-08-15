@@ -31,7 +31,7 @@ RUN \
        fi \
     && curl --fail --location --retry 3 --output /tmp/rustdesk-server.zip \
         "https://github.com/rustdesk/rustdesk-server/releases/download/${RUSTDESK_SERVER_VERSION}/rustdesk-server-linux-${ARCH}.zip" \
-    && echo "${SHA256}  /tmp/rustdesk-server.zip" | sha256sum --check --strict \
+    && echo "${SHA256}  /tmp/rustdesk-server.zip" | sha256sum -c \
     && unzip /tmp/rustdesk-server.zip -d /tmp/rustdesk-server \
     && mv "/tmp/rustdesk-server/${ARCH}" /opt/rustdesk-server \
     && chmod +x /opt/rustdesk-server/hbbs \
