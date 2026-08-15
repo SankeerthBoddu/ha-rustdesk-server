@@ -5,6 +5,8 @@ labels: "bug"
 assignees: ""
 ---
 
+# Bug report
+
 ## Problem
 
 Describe what happens and what you expected instead.
