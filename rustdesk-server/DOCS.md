@@ -1,170 +1,168 @@
-# Home Assistant Add-on: RustDesk Server
+# Home Assistant App: RustDesk Server
 
 Self-hosted [RustDesk][rustdesk] server (`hbbs` + `hbbr`) for your own
-remote-desktop relay.
+remote-desktop relay, packaged as a Home Assistant App (formerly add-on).
 
 ## About
 
-[RustDesk][rustdesk] is an open-source remote-desktop application written in
-Rust. The public RustDesk servers are meant for testing and are not sized for
-production traffic. Hosting your own server gives you:
+[RustDesk][rustdesk] is an open-source remote-desktop application. This App
+bundles the two open-source RustDesk server components:
 
-- Predictable connection times and throughput.
-- Control over which keys are allowed to relay traffic.
-- The option to enforce end-to-end encrypted clients only.
+- `hbbs` - ID / rendezvous server.
+- `hbbr` - relay server.
 
-This add-on bundles the two RustDesk server components:
-
-- `hbbs` - the ID / rendezvous server.
-- `hbbr` - the relay server.
+Hosting your own server gives you control over the server identity and relay
+path and lets the service run alongside the rest of your Home Assistant
+infrastructure.
 
 ## Installation
 
-1. Add this repository to your Home Assistant add-on store:
+1. Add this repository to Home Assistant:
 
    [![Open Home Assistant and add repository.][add-repo-shield]][add-repo]
 
-2. Search for **RustDesk Server** in the add-on store and click **Install**.
-3. Configure the add-on (see below) and start it.
-4. (Recommended) Enable **Watchdog** and **Start on boot**.
+2. Open **Settings > Apps > App Store**. Older Home Assistant versions call
+   this area **Add-ons** / **Add-on Store**.
+3. Find **RustDesk Server** and select **Install**.
+4. Leave the key fields empty unless you are restoring an existing keypair.
+5. Start the App.
+6. Recommended: enable **Start on boot** and **Watchdog**.
+7. Open the App logs and copy the displayed public key into your RustDesk
+   clients.
 
 ## Configuration
 
-Example add-on configuration:
+Example App configuration:
 
 ```yaml
 encrypted_only: true
-relay: rustdesk.example.com
+relay: ""
 private_key: ""
 public_key: ""
 ```
 
 > [!TIP]
-> **Connecting Clients**
-> To successfully establish a RustDesk remote session, BOTH your local
-> machine and your target remote machine MUST be configured identically. Open
-> the **Network Settings** in both RustDesk apps and specify your **ID Server**
-> (your domain or IP) and paste your **Key** (the public key shown in logs).
-> When correctly configured, the bottom of the client will turn green and say
-> "Ready".
+> **Configure both ends.** The controlling RustDesk client and the target
+> RustDesk client must use the same private **ID Server** and public **Key**.
+> A target still using RustDesk's public infrastructure can produce errors such
+> as `ID Does Not Exist` even when the controlling client says `Ready`.
 
 ### Option: `encrypted_only`
 
-When `true` (default), `hbbs` and `hbbr` are started with `-k _`, which forces
-all clients to use the server's key and rejects unencrypted clients. Strongly
-recommended for any public deployment.
+When `true` (default), `hbbs` and `hbbr` start with `-k _`. Clients must use
+the server key. This is strongly recommended for an Internet-reachable server.
 
-### Option: `relay` (optional)
+### Option: `relay`
 
-Hostname or IP address of the machine running `hbbr` (usually the same host as
-this add-on). Clients will be told to use this address for relayed
-connections. Include a port only if you use something other than the default
-`21117`, for example `rustdesk.example.com:21117`. Separate multiple relays
-with commas.
+Optional hostname or IP address for the relay (`hbbr`) that `hbbs` advertises
+to clients. In a normal single-host installation you can usually leave this
+blank and let RustDesk clients infer the relay.
 
-### Option: `private_key` & `public_key` (Leave Blank)
+Set it when you deliberately need to advertise a different reachable address,
+for example:
 
-There is **no need** to manually fill out the `private_key` and `public_key`
-fields in the add-on config. Simply leave them empty!
+```yaml
+relay: rustdesk.example.com
+```
 
-When the add-on boots for the first time, it automatically generates a fresh,
-secure keypair for you. You can easily find the `Key` printed directly in the
-Add-on's **Log** tab inside Home Assistant. Copy that key and paste it into
-your RustDesk clients.
+or a non-default relay port:
+
+```yaml
+relay: rustdesk.example.com:21117
+```
+
+Do not set `relay` merely because you are using Tailscale or a DNS name. First
+verify that the address you advertise is actually reachable by both clients.
+
+### Options: `private_key` and `public_key`
+
+For a new installation, leave both blank. The App generates a keypair on first
+boot and stores it persistently. The public key is printed in the App logs.
+
+Only supply these values when you intentionally want to restore or reuse an
+existing RustDesk server identity. Never post your private key in a GitHub
+issue, forum post, or screenshot.
 
 ## Ports
 
-The add-on exposes the full set of ports RustDesk uses. Forward these on your
-router to reach the server from the outside:
+The App declares the full RustDesk server port set:
 
 | Port | Component | Purpose |
 | --- | --- | --- |
-| 21114/tcp | hbbs | Web console / API (Pro only) |
-| 21115/tcp | hbbs | NAT type test and online status (**required**) |
-| 21116/tcp | hbbs | TCP hole punching (**required**) |
-| 21116/udp | hbbs | ID registration and heartbeat (**required**) |
-| 21117/tcp | hbbr | Relay service (**required**) |
-| 21118/tcp | hbbs | RustDesk Web Client support (optional) |
-| 21119/tcp | hbbr | RustDesk Web Client support (optional) |
+| 21114/tcp | hbbs | Web console / API (primarily Pro features) |
+| 21115/tcp | hbbs | NAT type test and online status |
+| 21116/tcp | hbbs | TCP hole punching and connection service |
+| 21116/udp | hbbs | ID registration and heartbeat |
+| 21117/tcp | hbbr | Relay service |
+| 21118/tcp | hbbs | Web-client support (optional) |
+| 21119/tcp | hbbr | Web-client support (optional) |
 
-> [!TIP]
-> The add-on runs on the host network to allow accurate NAT type detection
-> and UDP hole punching. Ports are still declared so the Supervisor shows
-> them in the UI.
+For normal native-client access from the Internet, forward these to the Home
+Assistant host:
 
-## External Access & Domains
+- `21115/tcp`
+- `21116/tcp`
+- `21116/udp`
+- `21117/tcp`
 
-Because RustDesk uses custom TCP and UDP sockets for hole-punching, your
-networking setup must be configured carefully. Standard website reverse-proxies
-will not work out-of-the-box.
+The App uses `host_network: true` so `hbbs` and `hbbr` bind on the Home
+Assistant host network. Home Assistant still displays the declared ports in
+the App UI.
 
-### Option 1: Direct Router Forward (DuckDNS / No Proxy)
+## External access
 
-If you use **DuckDNS** or just want a simple setup, you do not need NGINX at
-all! Your domain (e.g., `myhome.duckdns.org`) resolves directly to your home
-IP without HTTP proxying.
+RustDesk uses raw TCP and UDP sockets. A normal HTTP/HTTPS reverse proxy does
+not proxy these connections.
 
-1. Log into your home router's settings.
-2. Port Forward the following ports to your Home Assistant IP address:
-   - `21115` (TCP)
-   - `21116` (TCP and UDP)
-   - `21117` (TCP)
-3. In your RustDesk Client, enter `myhome.duckdns.org` as your **ID Server**.
+### Direct router forward / DuckDNS
 
-### Option 2: Cloudflare (Custom Domain)
+A simple public setup is:
 
-If you own a custom domain (e.g., `rustdesk.your-domain.com`) managed by
-Cloudflare, you must configure your DNS `A` record as **DNS Only (Grey Cloud)**.
+1. Point your DNS name, such as `myhome.duckdns.org`, at your public IP.
+2. Forward `21115/tcp`, `21116/tcp`, `21116/udp`, and `21117/tcp` to the Home
+   Assistant host.
+3. Configure that hostname as the **ID Server** on both RustDesk clients.
+4. Configure the public key from the App logs on both clients.
+
+### Cloudflare-managed DNS
+
+If Cloudflare manages the domain, create a DNS record that points to your
+public IP and leave the record **DNS Only** (grey cloud).
 
 > [!WARNING]
-> If you leave the Cloudflare Proxy enabled (Orange Cloud), Cloudflare will
-> instantly block all of RustDesk's traffic because it is not standard website
-> HTTP/HTTPS traffic.
+> The normal Cloudflare HTTP proxy does not carry RustDesk's raw TCP/UDP
+> protocol. An orange-cloud proxy record is not a substitute for forwarding
+> RustDesk's ports.
 
-1. Create an `A` record in Cloudflare pointing to your home IP address.
-2. Click the Orange Cloud to turn it Grey (**DNS Only**).
-3. Port Forward `21115-21117` on your router to your Home Assistant IP.
+### Nginx Proxy Manager / NGINX Streams
 
-### Option 3: Advanced NGINX Streams
+Do not use an ordinary HTTP **Proxy Host** for RustDesk. Use TCP/UDP Streams.
+For Nginx Proxy Manager, create these streams to the Home Assistant host:
 
-If you absolutely must run the traffic through an internal NGINX server (e.g.,
-Nginx Proxy Manager), you cannot use standard HTTP "Proxy Hosts". You must
-configure raw TCP/UDP Streams.
+- `21115/tcp` -> `<HA_IP>:21115`
+- `21116/tcp` -> `<HA_IP>:21116`
+- `21116/udp` -> `<HA_IP>:21116`
+- `21117/tcp` -> `<HA_IP>:21117`
 
-#### Nginx Proxy Manager (NPM Add-on)
-
-1. Delete any "Proxy Hosts" you created for RustDesk.
-2. Go to the **Streams** tab.
-3. Add four separate streams targeting your Home Assistant IP address:
-   - Port `21115` TCP -> `<HA_IP>:21115`
-   - Port `21116` TCP -> `<HA_IP>:21116`
-   - Port `21116` UDP -> `<HA_IP>:21116`
-   - Port `21117` TCP -> `<HA_IP>:21117`
-4. Port Forward these ports on your router, pointing them to your NPM host.
-
-#### NGINX Config (Manual)
-
-Add the following to your `nginx.conf` within the `stream { ... }` block
-(outside the `http { ... }` block):
+A manual NGINX example:
 
 ```nginx
 stream {
-    # hbbs - NAT type test and online status
     server {
         listen 21115;
         proxy_pass <YOUR_HA_IP>:21115;
     }
-    # hbbs - Hole punching
+
     server {
         listen 21116;
         proxy_pass <YOUR_HA_IP>:21116;
     }
-    # hbbs - UDP heartbeat
+
     server {
         listen 21116 udp;
         proxy_pass <YOUR_HA_IP>:21116;
     }
-    # hbbr - Relay service
+
     server {
         listen 21117;
         proxy_pass <YOUR_HA_IP>:21117;
@@ -172,48 +170,122 @@ stream {
 }
 ```
 
-## Common Pitfalls & Troubleshooting
+## Tailscale
 
-### 1. Error: "ID Does Not Exist"
+Tailscale can be a good way to keep RustDesk private, but there are two common
+network layouts and they behave differently on Home Assistant.
 
-If you set up your client and get an **"ID Does Not Exist"** error when trying
-to remote into a machine, it means your local computer connects to your
-Private Server correctly, but the *Target Computer* does not! Every computer
-you wish to control must have their **ID Server** and **Key** configured to
-point to your Private Server.
+### Recommended: Home Assistant LAN IP through a subnet route
 
-### 2. Cloudflare 504 Gateway Timeout (Checking Logs)
+This is usually the easiest layout to reason about:
 
-If you are viewing your Home Assistant Add-on logs remotely via a Cloudflare
-proxy, your log viewer tab might suddenly crash with an HTML
-**504 Gateway Timeout** error.
+1. Advertise the Home Assistant LAN subnet from an appropriate Tailscale node
+   and approve the route in Tailscale.
+2. From the remote Tailscale client, verify that the Home Assistant LAN IP is
+   reachable.
+3. Configure the Home Assistant LAN IP (for example `192.168.1.20`) as the
+   RustDesk **ID Server** on both RustDesk clients.
+4. Leave `relay` blank initially.
+5. Use the public key from the App logs on both clients.
 
-- **Why:** Cloudflare kills any HTTP connection that remains idle for 100
-  seconds. Because the RustDesk server is quiet and rarely prints logs,
-  Cloudflare assumes the log stream froze and cuts you off.
-- **Fix:** Just refresh the web page! Your server did not crash.
+Traffic remains reachable over Tailscale, while RustDesk talks to the same LAN
+address on which the Home Assistant host-networked App is already listening.
 
-## Persistent data
+### Direct Home Assistant Tailscale `100.x` address
 
-The add-on persists its keys and the `hbbs` SQLite database under
-`/addon_configs/<slug>/` on your Home Assistant host. Back this directory up
-if you want to restore the same identity after a reinstall.
+This can work, but it depends on how the Home Assistant Tailscale App exposes
+its network interface. Tailscale commonly supports userspace networking, where
+having a `100.x` address does not necessarily mean every host-networked App is
+bound directly to that address in the way a normal Linux `tailscale0`
+interface would be.
+
+If clients show **Ready** using the `100.x` address but an actual session fails
+with **connection reset by peer**, do not assume the RustDesk server itself is
+broken. Test the LAN-IP-over-subnet-route layout above. Also verify that you
+have not set `relay` to an address that one of the two clients cannot reach.
+
+If you deliberately disable Tailscale userspace networking and expose a normal
+host `tailscale0` interface, direct `100.x` addressing may be appropriate, but
+that is a Home Assistant/Tailscale networking decision rather than a setting
+this RustDesk App controls.
+
+### What `Ready` proves
+
+A green **Ready** state is useful but is not an end-to-end test of a remote
+session. It means the client can perform enough rendezvous communication to
+consider the configured server available. A successful remote session can
+still require a working hole-punch or relay path between both clients.
+
+When troubleshooting Tailscale, collect these four facts separately:
+
+1. Can **both** RustDesk clients reach the configured ID Server address?
+2. Do **both** clients use the same public key?
+3. Is `relay` blank, or does it advertise an address reachable by both clients?
+4. Does the session work using the Home Assistant LAN IP over a Tailscale
+   subnet route?
+
+## Troubleshooting
+
+### `ID Does Not Exist`
+
+Usually one client is still registered against a different RustDesk server.
+Verify the **ID Server** and **Key** on both the controlling and target clients.
+
+### `connection reset by peer`
+
+This normally means the initial server contact was not the whole problem. Check
+which address is being advertised for the relay, whether both clients can reach
+it, and whether the same setup works using a LAN address. For Tailscale, see
+the dedicated section above.
+
+### Client says `Ready`, but a session still fails
+
+Check the actual transport path rather than only the status indicator:
+
+- Verify both clients use the same ID Server and public key.
+- Temporarily leave `relay` blank.
+- If using the public Internet, confirm the required TCP/UDP forwarding.
+- If using NGINX/NPM, confirm you used Streams rather than HTTP Proxy Hosts.
+- If using Tailscale, test the LAN address through a subnet route.
+
+### Cloudflare log viewer timeout
+
+If you access Home Assistant itself through an HTTP proxy such as Cloudflare,
+the Home Assistant log-stream web page can time out while the quiet RustDesk
+App continues running. Refresh the Home Assistant page and check the App state
+before treating a browser gateway error as a RustDesk service crash.
+
+## Persistent data and backup
+
+The App persists its keys and `hbbs` SQLite data under its Home Assistant App
+configuration directory. Include App configuration data in your Home Assistant
+backup strategy if retaining the same RustDesk server identity matters to you.
+
+Do not casually regenerate the keypair after clients are deployed; doing so
+requires updating the public key on those clients.
 
 ## Upgrading
 
-The pinned `rustdesk-server` version is shown in the top of the add-on
-`Dockerfile`. When upgrading, make sure your clients are compatible with the
-new server version - RustDesk occasionally changes the wire protocol.
+The Dockerfile pins the upstream RustDesk Server version and SHA-256 digests.
+Renovate can propose a new RustDesk version, but CI intentionally requires the
+upstream asset digests to be updated as part of that review.
+
+The Home Assistant App version adds a packaging revision to the upstream
+RustDesk version. For example:
+
+- `1.1.16-1` = RustDesk Server `1.1.16`, packaging revision `1`.
+- `1.1.16-2` = the same RustDesk Server version with App packaging changes.
 
 ## Support
 
-- [Open an issue on GitHub][issues]
-- [Home Assistant community forum][forum]
-- [Home Assistant Discord][discord-ha]
+- [Open a GitHub issue][issues] for reproducible App bugs.
+- Use the [Home Assistant community thread][forum] for setup and networking
+  discussion.
+- Read [SECURITY.md][security] before reporting a sensitive vulnerability.
 
 [add-repo]: https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fsankeerthboddu%2Fha-rustdesk-server
 [add-repo-shield]: https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg
-[discord-ha]: https://discord.gg/c5DvZ4e
-[forum]: https://community.home-assistant.io
+[forum]: https://community.home-assistant.io/t/self-host-rustdesk-server-inside-home-assistant/1004868
 [issues]: https://github.com/sankeerthboddu/ha-rustdesk-server/issues
 [rustdesk]: https://github.com/rustdesk/rustdesk
+[security]: https://github.com/sankeerthboddu/ha-rustdesk-server/blob/main/SECURITY.md

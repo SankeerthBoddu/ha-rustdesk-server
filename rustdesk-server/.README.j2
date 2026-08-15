@@ -1,34 +1,43 @@
-# Home Assistant Add-on: RustDesk Server
+# Home Assistant App: RustDesk Server
 
 [![GitHub Release][releases-shield]][releases]
 [![License][license-shield]][license]
 
-Self-hosted [RustDesk][rustdesk] server (hbbs + hbbr) for your own
-remote desktop relay.
+Self-hosted [RustDesk][rustdesk] server (`hbbs` + `hbbr`) for your own
+remote-desktop relay.
 
 ## About
 
-This add-on lets you self-host the signaling (`hbbs`) and relay (`hbbr`)
-servers required by RustDesk clients. The public RustDesk servers are meant
-for testing only and are not sized for production traffic - running your own
-server gives you predictable performance and keeps your remote-desktop traffic
-on infrastructure you control.
+This Home Assistant App (formerly add-on) lets you self-host the signaling
+(`hbbs`) and relay (`hbbr`) services required by RustDesk clients. It bundles
+the free, open-source RustDesk Server rather than RustDesk Server Pro.
+
+For installation, configuration, external access, Tailscale, NGINX Streams,
+Cloudflare, and troubleshooting guidance, see the full
+[App documentation][docs].
+
+## Maintenance
+
+RustDesk, the Home Assistant base image, and workflow dependencies are monitored
+with Renovate. CI builds both supported architectures, verifies upstream
+RustDesk download digests, and scans the resulting App images before merge.
 
 ## Support
 
-- [Open an issue on GitHub][issues]
-- [Home Assistant community forum][forum]
-- [Home Assistant Discord][discord-ha]
+- [Open an issue on GitHub][issues] for reproducible App bugs.
+- [Home Assistant community thread][forum] for setup and networking discussion.
+- [Security policy][security] for sensitive reports.
 
 ## License
 
 MIT - see [LICENSE][license].
 
-[discord-ha]: https://discord.gg/c5DvZ4e
-[forum]: https://community.home-assistant.io
+[docs]: https://github.com/sankeerthboddu/ha-rustdesk-server/blob/main/rustdesk-server/DOCS.md
+[forum]: https://community.home-assistant.io/t/self-host-rustdesk-server-inside-home-assistant/1004868
 [issues]: https://github.com/sankeerthboddu/ha-rustdesk-server/issues
 [license]: https://github.com/sankeerthboddu/ha-rustdesk-server/blob/main/LICENSE
 [license-shield]: https://img.shields.io/github/license/sankeerthboddu/ha-rustdesk-server.svg
 [releases]: https://github.com/sankeerthboddu/ha-rustdesk-server/releases
 [releases-shield]: https://img.shields.io/github/v/release/sankeerthboddu/ha-rustdesk-server
 [rustdesk]: https://github.com/rustdesk/rustdesk
+[security]: https://github.com/sankeerthboddu/ha-rustdesk-server/blob/main/SECURITY.md

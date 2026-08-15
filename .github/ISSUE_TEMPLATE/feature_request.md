@@ -1,21 +1,25 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
-title: ""
-labels: ""
+about: Suggest an improvement to the Home Assistant App
+labels: "enhancement"
 assignees: ""
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always
-frustrated when [...]
+# Feature request
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## Problem or use case
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've
-considered.
+What problem are you trying to solve, or what setup would this improve?
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+## Proposed change
+
+Describe the behavior or configuration you would like to add.
+
+## Alternatives considered
+
+Describe any current workaround or alternative you have tried.
+
+## Additional context
+
+Include relevant Home Assistant, RustDesk, or networking context. Please do not
+include passwords, private keys, tokens, or other secrets.

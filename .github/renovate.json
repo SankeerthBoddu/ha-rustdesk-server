@@ -4,15 +4,6 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["//build.yaml$/"],
-      "matchStringsStrategy": "any",
-      "matchStrings": [
-        "(aarch64|amd64|armhf|armv7|i386):\\s[\"']?(?<depName>.*?):(?<currentValue>.*?)[\"']?\\s"
-      ],
-      "datasourceTemplate": "docker"
-    },
-    {
-      "customType": "regex",
       "managerFilePatterns": ["//Dockerfile$/"],
       "matchStringsStrategy": "any",
       "matchStrings": [
@@ -28,7 +19,7 @@
         "\\s\\s(?<package>[a-z0-9][a-z0-9-_]+)=(?<currentValue>[a-z0-9-_.]+)\\s+"
       ],
       "datasourceTemplate": "repology",
-      "depNameTemplate": "alpine_3_22/{{package}}",
+      "depNameTemplate": "alpine_3_24/{{package}}",
       "versioningTemplate": "loose"
     },
     {
@@ -42,9 +33,13 @@
   ],
   "packageRules": [
     {
+      "matchManagers": ["github-actions"],
+      "commitMessagePrefix": "chore(deps):"
+    },
+    {
       "matchDatasources": ["docker"],
       "commitMessagePrefix": "⬆️",
-      "commitMessageTopic": "Addon Base Image"
+      "commitMessageTopic": "Home Assistant base image"
     },
     {
       "matchDatasources": ["repology"],
@@ -56,7 +51,10 @@
       "matchDatasources": ["github-releases"],
       "matchDepNames": ["rustdesk/rustdesk-server"],
       "commitMessagePrefix": "✨",
-      "commitMessageTopic": "RustDesk-server"
+      "commitMessageTopic": "RustDesk Server",
+      "prBodyNotes": [
+        "After a RustDesk version bump, update both pinned RUSTDESK_SERVER_SHA256_* values from the upstream GitHub release asset digests. CI intentionally fails until those digests match."
+      ]
     }
   ]
 }
