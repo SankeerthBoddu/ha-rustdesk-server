@@ -1,6 +1,6 @@
 ---
 name: RustDesk Server
-version: "1.1.16-1"
+version: "1.1.16-2"
 slug: rustdesk-server
 description: Self-hosted RustDesk server (hbbs + hbbr) for your own remote desktop relay.
 url: https://github.com/sankeerthboddu/ha-rustdesk-server
@@ -39,4 +39,4 @@ schema:
   relay: str?
   private_key: password?
   public_key: str?
-image: ghcr.io/sankeerthboddu/{arch}-ha-rustdesk-server
+image: ghcr.io/sankeerthboddu/ha-rustdesk-server
