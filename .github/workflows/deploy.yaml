@@ -7,6 +7,11 @@ on:
     types:
       - published
   workflow_dispatch:
+    inputs:
+      release_ref:
+        description: "Published release tag to build, for example v1.1.16-2"
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}
@@ -29,7 +34,7 @@ jobs:
       - name: Checkout release
         uses: actions/checkout@v7.0.1
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_ref || github.ref }}
           persist-credentials: false
 
       - name: Get App information
@@ -39,10 +44,10 @@ jobs:
           path: "./rustdesk-server"
 
       - name: Verify release tag matches App version
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || inputs.release_ref != ''
         shell: bash
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_ref }}
           APP_VERSION: ${{ steps.info.outputs.version }}
         run: |
           set -euo pipefail
@@ -74,7 +79,7 @@ jobs:
       - name: Checkout release
         uses: actions/checkout@v7.0.1
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_ref || github.ref }}
           persist-credentials: false
 
       - name: Build, push, and sign image

@@ -16,6 +16,7 @@ jobs:
     name: Draft release
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
       pull-requests: read
     steps:
@@ -45,7 +46,7 @@ jobs:
 
           if release_json="$(gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" --json isDraft 2>/dev/null)"; then
             if [[ "$(jq -r '.isDraft' <<< "${release_json}")" != "true" ]]; then
-              echo "${tag} is already published; nothing to draft."
+              echo "${tag} is already published; release creation will be skipped."
               skip=true
             fi
           fi
@@ -65,3 +66,14 @@ jobs:
           tag: ${{ steps.release.outputs.tag }}
           commitish: ${{ github.sha }}
           publish: ${{ steps.release.outputs.publish }}
+
+      - name: Dispatch release image build
+        if: steps.release.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          gh workflow run deploy.yaml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f release_ref="${RELEASE_TAG}"
