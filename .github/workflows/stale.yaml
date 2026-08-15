@@ -4,7 +4,7 @@ name: Stale
 # yamllint disable-line rule:truthy
 on:
   schedule:
-    # Weekly sweep keeps triage healthy without daily automation churn.
+    # Weekly sweep keeps old threads visible while limiting automation noise.
     - cron: "0 8 * * 0"
   workflow_dispatch:
 
@@ -19,9 +19,16 @@ jobs:
     steps:
       - uses: actions/stale@v11
         with:
-          days-before-stale: 30
-          days-before-close: 7
+          days-before-stale: 90
+          days-before-close: 30
           stale-issue-label: stale
           stale-pr-label: stale
-          exempt-issue-labels: "pinned,security,help wanted"
+          stale-issue-message: >-
+            This issue has had no activity for 90 days. If it is still relevant,
+            please add any current details or logs and it will remain open.
+          close-issue-message: >-
+            Closing after an extended period without activity. If the problem
+            still exists on a current release, please open a new issue with
+            updated environment details and logs.
+          exempt-issue-labels: "pinned,security,help wanted,bug,confirmed"
           exempt-pr-labels: "pinned,security"
