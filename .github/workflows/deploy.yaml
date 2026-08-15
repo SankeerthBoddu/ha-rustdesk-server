@@ -26,10 +26,10 @@ jobs:
     outputs:
       architectures: ${{ steps.info.outputs.architectures }}
       matrix: ${{ steps.matrix.outputs.matrix }}
-      version: ${{ steps.info.outputs.version }}
-      name: ${{ steps.info.outputs.name }}
-      description: ${{ steps.info.outputs.description }}
-      url: ${{ steps.info.outputs.url }}
+      version: ${{ steps.normalize.outputs.version }}
+      name: ${{ steps.normalize.outputs.name }}
+      description: ${{ steps.normalize.outputs.description }}
+      url: ${{ steps.normalize.outputs.url }}
     steps:
       - name: Checkout release
         uses: actions/checkout@v7.0.1
@@ -43,12 +43,27 @@ jobs:
         with:
           path: "./rustdesk-server"
 
+      - name: Normalize App information
+        id: normalize
+        shell: bash
+        run: |
+          version=${{ steps.info.outputs.version }}
+          name=${{ steps.info.outputs.name }}
+          description=${{ steps.info.outputs.description }}
+          url=${{ steps.info.outputs.url }}
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
+          echo "description=${description}" >> "$GITHUB_OUTPUT"
+          if [[ -n "${url}" && "${url}" != "null" ]]; then
+            echo "url=${url}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Verify release tag matches App version
         if: github.event_name == 'release' || inputs.release_ref != ''
         shell: bash
         env:
           RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_ref }}
-          APP_VERSION: ${{ steps.info.outputs.version }}
+          APP_VERSION: ${{ steps.normalize.outputs.version }}
         run: |
           set -euo pipefail
           if [[ "${RELEASE_TAG}" != "v${APP_VERSION}" ]]; then
