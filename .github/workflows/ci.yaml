@@ -117,10 +117,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
-      version: ${{ steps.info.outputs.version }}
-      name: ${{ steps.info.outputs.name }}
-      description: ${{ steps.info.outputs.description }}
-      url: ${{ steps.info.outputs.url }}
+      version: ${{ steps.normalize.outputs.version }}
+      name: ${{ steps.normalize.outputs.name }}
+      description: ${{ steps.normalize.outputs.description }}
+      url: ${{ steps.normalize.outputs.url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -130,6 +130,21 @@ jobs:
         uses: home-assistant/actions/helpers/info@master
         with:
           path: "./rustdesk-server"
+
+      - name: Normalize App information
+        id: normalize
+        shell: bash
+        run: |
+          version=${{ steps.info.outputs.version }}
+          name=${{ steps.info.outputs.name }}
+          description=${{ steps.info.outputs.description }}
+          url=${{ steps.info.outputs.url }}
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
+          echo "description=${description}" >> "$GITHUB_OUTPUT"
+          if [[ -n "${url}" && "${url}" != "null" ]]; then
+            echo "url=${url}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Prepare build matrix
         id: matrix
