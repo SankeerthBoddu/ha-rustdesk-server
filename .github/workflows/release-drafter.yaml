@@ -19,6 +19,49 @@ jobs:
       contents: write
       pull-requests: read
     steps:
-      - uses: release-drafter/release-drafter@v7
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Resolve App release metadata
+        id: release
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          version="$(awk -F'"' '/^version:/ {print $2; exit}' rustdesk-server/config.yaml)"
+          tag="v${version}"
+          subject="$(git log -1 --pretty=%s)"
+          publish=false
+          skip=false
+
+          if [[ "${subject}" == release:* ]]; then
+            publish=true
+          fi
+
+          if release_json="$(gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" --json isDraft 2>/dev/null)"; then
+            if [[ "$(jq -r '.isDraft' <<< "${release_json}")" != "true" ]]; then
+              echo "${tag} is already published; nothing to draft."
+              skip=true
+            fi
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "publish=${publish}" >> "$GITHUB_OUTPUT"
+          echo "skip=${skip}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update release
+        if: steps.release.outputs.skip != 'true'
+        uses: release-drafter/release-drafter@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ steps.release.outputs.version }}
+          name: ${{ steps.release.outputs.tag }}
+          tag: ${{ steps.release.outputs.tag }}
+          commitish: ${{ github.sha }}
+          publish: ${{ steps.release.outputs.publish }}
