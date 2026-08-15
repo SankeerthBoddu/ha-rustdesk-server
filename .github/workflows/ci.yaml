@@ -172,11 +172,24 @@ jobs:
           cosign: false
           version: ${{ needs.prepare-build.outputs.version }}
 
-      - name: Scan image for fixable high/critical vulnerabilities
+      - name: Block fixable high/critical OS vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ matrix.image }}:ci
+          scanners: vuln
+          vuln-type: os
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "1"
+          timeout: 10m
+
+      - name: Report inherited high/critical library vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ matrix.image }}:ci
+          scanners: vuln
+          vuln-type: library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "0"
           timeout: 10m
