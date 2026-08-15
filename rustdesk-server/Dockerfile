@@ -8,7 +8,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Pinned RustDesk Server release
 # https://github.com/rustdesk/rustdesk-server/releases
 ARG BUILD_ARCH
-ARG RUSTDESK_SERVER_VERSION=1.1.15
+ARG RUSTDESK_SERVER_VERSION=1.1.16
 
 # Install RustDesk Server
 # hadolint ignore=DL3018
