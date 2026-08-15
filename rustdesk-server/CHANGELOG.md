@@ -1,13 +1,27 @@
 # Changelog
 
-All notable changes to this add-on are documented here.
+All notable changes to this Home Assistant App are documented here.
+
+## 1.1.16-1
+
+### 1.1.16-1 Runtime Changes
+
+- Updated bundled RustDesk Server from `1.1.15` to `1.1.16`.
+- Fixed the upstream long-offline peer status overflow issue.
+- Included upstream dependency and UDP punch-hole security fixes.
+
+### 1.1.16-1 Maintenance Updates
+
+- Updated `markdownlint-cli2-action` to v24.
+- Updated `actions/stale` to v11.
+- Updated `hadolint-action` to v3.4.0.
 
 ## 1.1.15-1
 
 ### Runtime Changes
 
 - Updated bundled RustDesk Server from `1.1.11-1` to `1.1.15`.
-- Updated Home Assistant add-on base images to `v20.1.1` for `amd64` and
+- Updated Home Assistant App base images to `v20.1.1` for `amd64` and
   `aarch64`.
 - Reduced scheduled automation noise by switching maintenance workflows to
   weekly runs.
@@ -46,7 +60,7 @@ All notable changes to this add-on are documented here.
 
 ### Changed
 
-- All documentation and in-add-on text translated to English.
+- All documentation and in-app text translated to English.
 - `hbbs` and `hbbr` now `exec` their binaries (cleaner signal handling under
   s6-overlay).
 - Upgraded bashio usage: `bashio::config.true`, `bashio::config.has_value`,

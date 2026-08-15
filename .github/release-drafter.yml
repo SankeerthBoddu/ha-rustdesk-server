@@ -1,6 +1,4 @@
 ---
-name-template: "v$RESOLVED_VERSION"
-tag-template: "v$RESOLVED_VERSION"
 categories:
   - title: "Breaking changes"
     labels:
@@ -22,22 +20,6 @@ categories:
     labels:
       - "documentation"
 change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
-version-resolver:
-  major:
-    labels:
-      - "breaking"
-  minor:
-    labels:
-      - "feature"
-      - "enhancement"
-  patch:
-    labels:
-      - "fix"
-      - "bug"
-      - "chore"
-      - "dependencies"
-      - "documentation"
-  default: patch
 template: |
   ## Changes
 
