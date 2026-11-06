@@ -11,7 +11,7 @@ init: false
 startup: services
 host_network: true
 map:
-  - type: addon_config
+  - type: app_config
     read_only: false
 ports:
   "21114/tcp": 21114

@@ -1,11 +1,11 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
 # ==============================================================================
-# Home Assistant Add-on: RustDesk Server
+# Home Assistant App: RustDesk Server
 # Verifies and materializes the Ed25519 keypair on disk.
 #
 # Behaviour:
-#   - If a key is present in add-on options AND on disk, they must match.
+#   - If a key is present in App options AND on disk, they must match.
 #   - If only one of private/public is provided, the run is aborted.
 #   - If neither is present, hbbs will generate a keypair on first boot.
 # ==============================================================================
@@ -21,7 +21,7 @@ if [ ! -d /config ]; then
     mkdir -p /config
 fi
 
-# Materialize keys supplied via add-on options into /config.
+# Materialize keys supplied via App options into /config.
 if [ ! -f /config/id_ed25519 ] && bashio::config.has_value 'private_key'; then
     bashio::log.info "Writing configured private key to /config/id_ed25519"
     private_key=$(bashio::config 'private_key')
