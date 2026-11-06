@@ -2,6 +2,22 @@
 
 All notable changes to this Home Assistant App are documented here.
 
+## 1.1.16-4
+
+### 1.1.16-4 Bug Fixes
+
+- Fixed the App failing to start on 1.1.16-3: the s6 service scripts
+  (`hbbs/run`, `hbbr/run`, `key-secret/up.real`) lost their executable
+  bit when they were updated through the GitHub API, so s6 could not
+  execute `key-secret/up.real` (`Permission denied`, exit 126) and the
+  container stopped. The scripts are now made executable at build time
+  in the Dockerfile, so a lost executable bit in git can no longer break
+  a release.
+
+### 1.1.16-4 Notes
+
+- No RustDesk Server change — still bundles RustDesk Server `1.1.16`.
+
 ## 1.1.16-3
 
 ### 1.1.16-3 Build and Security

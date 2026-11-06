@@ -43,6 +43,17 @@ RUN \
 # Copy root filesystem
 COPY rootfs /
 
+# s6 executes the service scripts directly, so they must be executable.
+# Do not rely on the executable bit in git alone: file writes through the
+# GitHub API (and some editors) can silently drop it, which broke 1.1.16-3.
+RUN chmod +x \
+    /etc/s6-overlay/s6-rc.d/hbbs/run \
+    /etc/s6-overlay/s6-rc.d/hbbs/finish \
+    /etc/s6-overlay/s6-rc.d/hbbr/run \
+    /etc/s6-overlay/s6-rc.d/hbbr/finish \
+    /etc/s6-overlay/s6-rc.d/key-secret/up \
+    /etc/s6-overlay/s6-rc.d/key-secret/up.real
+
 # Build arguments
 ARG BUILD_DATE
 ARG BUILD_DESCRIPTION
