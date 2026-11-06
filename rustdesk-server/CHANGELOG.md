@@ -2,6 +2,28 @@
 
 All notable changes to this Home Assistant App are documented here.
 
+## 1.1.16-3
+
+### 1.1.16-3 Build and Security
+
+- Updated the Home Assistant base image from `21.0.1` to `21.0.10`,
+  fixing the fixable high-severity OS-package findings (brotli, curl,
+  jq, openssl) that Trivy reported on the previous base image.
+- Updated the home-assistant/builder actions from `2026.06.0` to
+  `2026.09.0`.
+
+### 1.1.16-3 Maintenance Updates
+
+- Updated `hadolint-action` to v3.5.0.
+- Updated `markdownlint-cli2-action` to v25.
+- Renamed the App configuration mount from `addon_config` to
+  `app_config` and updated the remaining "Add-on" comments in the
+  service scripts to "App".
+
+### 1.1.16-3 Notes
+
+- No RustDesk Server change — still bundles RustDesk Server `1.1.16`.
+
 ## 1.1.16-2
 
 ### 1.1.16-2 Build and Security
